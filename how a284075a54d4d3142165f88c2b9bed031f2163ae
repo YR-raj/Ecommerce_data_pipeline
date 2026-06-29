@@ -1,0 +1,133 @@
+[33mcommit b0b0ac38b86a9f0f9876d3cdc8534c6f1825fe69[m
+Author: Yash Raj <yashraj1014@gmail.com>
+Date:   Mon Jun 29 17:19:18 2026 +0530
+
+    Initial Commit: Uploading project
+
+[1mdiff --git a/.gitignore b/.gitignore[m
+[1mindex 83972fa..72bab29 100644[m
+[1m--- a/.gitignore[m
+[1m+++ b/.gitignore[m
+[36m@@ -216,3 +216,22 @@[m [m__marimo__/[m
+ [m
+ # Streamlit[m
+ .streamlit/secrets.toml[m
+[32m+[m
+[32m+[m
+[32m+[m
+[32m+[m[32m*.env[m
+[32m+[m[32m*.db[m
+[32m+[m[32m*.csv[m
+[32m+[m[32m*.yaml[m
+[32m+[m
+[32m+[m
+[32m+[m
+[32m+[m[32m# Local Data Storage Layer (Do not track warehouse data)[m
+[32m+[m[32mdata/[m
+[32m+[m
+[32m+[m[32m# Python Virtual Environment[m
+[32m+[m[32m__pycache__/[m
+[32m+[m[32m*.pyc[m
+[32m+[m
+[32m+[m[32m# IDE Configurations[m
+[32m+[m[32m.vscode/[m
+\ No newline at end of file[m
+[1mdiff --git a/Dockerfile b/Dockerfile[m
+[1mnew file mode 100644[m
+[1mindex 0000000..deb881b[m
+[1m--- /dev/null[m
+[1m+++ b/Dockerfile[m
+[36m@@ -0,0 +1,15 @@[m
+[32m+[m[32mFROM apache/airflow:2.8.1-python3.10[m
+[32m+[m
+[32m+[m[32mUSER root[m
+[32m+[m
+[32m+[m[32m# Install Java for PySpark[m
+[32m+[m[32mRUN apt-get update && \[m
+[32m+[m[32m    apt-get install -y default-jdk && \[m
+[32m+[m[32m    apt-get clean && \[m
+[32m+[m[32m    rm -rf /var/lib/apt/lists/*[m
+[32m+[m
+[32m+[m[32mUSER airflow[m
+[32m+[m
+[32m+[m[32mCOPY requirements.txt /[m
+[32m+[m
+[32m+[m[32mRUN pip install --no-cache-dir -r /requirements.txt[m
+\ No newline at end of file[m
+[1mdiff --git a/Documentation/Documentation.md b/Documentation/Documentation.md[m
+[1mnew file mode 100644[m
+[1mindex 0000000..1775017[m
+[1m--- /dev/null[m
+[1m+++ b/Documentation/Documentation.md[m
+[36m@@ -0,0 +1,259 @@[m
+[32m+[m[32m# 1. Project Overview[m
+[32m+[m
+[32m+[m[32m### 1.1 Introduction[m
+[32m+[m
+[32m+[m[32mThe **`Ecommerce_data_pipeline`** is a production-grade, fully containerized data platform that implements a localized **Medallion Architecture** (Bronze $\rightarrow$ Silver $\rightarrow$ Gold). Orchestrated by **Apache Airflow**, the pipeline ingests transactional data from an operational source system, executes stateful data enrichment and incremental merging via **PySpark**, and exposes highly optimized analytical assets for downstream business intelligence consumption.[m
+[32m+[m
+[32m+[m[32mThe entire framework is isolated within a dedicated virtual network using **Docker Compose**, eliminating local environmental dependencies and ensuring consistent, idempotent deployments across staging and production environments.[m
+[32m+[m
+[32m+[m[32m---[m
+[32m+[m
+[32m+[m[32m### 1.2 Project Objective[m
+[32m+[m
+[32m+[m[32mThe primary engineering objective of this project is to shift from a legacy, destructive full-load framework to an efficient, low-overhead **Incremental Ingestion (Change Data Capture)** mechanism. The pipeline architecture is designed to:[m
+[32m+[m
+[32m+[m[32m* Automatically capture source mutations across e-commerce core tables (`source_customers`, `source_products`, and `source_orders`) utilizing high-watermark timestamp tracking.[m
+[32m+[m[32m* Isolate, audit, and deduplicate concurrent data batches without risking data loss or state contamination.[m
+[32m+[m[32m* Compute optimized analytical aggregations that power business dashboards while maximizing infrastructure resource utilization.[m
+[32m+[m
+[32m+[m[32m---[m
+[32m+[m
+[32m+[m[32m### 1.3 Business Context & Analytical Impact[m
+[32m+[m
+[32m+[m[32mModern e-commerce platforms generate massive volumes of transactional logs daily. Traditional data systems frequently experience performance degradation because they run daily full-table overwrites, which heavily strain transactional databases and waste storage bandwidth.[m
+[32m+[m
+[32m+[m[32mBy executing micro-batch incremental workloads, this project minimizes compute footprints on operational infrastructure. At the destination tier, it builds a star-schema analytical warehouse layer that surfaces vital corporate performance health metrics:[m
+[32m+[m
+[32m+[m[32m$$\text{Total Revenue} = \sum (\text{total\_amount})$$[m
+[32m+[m
+[32m+[m[32m$$\text{Total Orders} = \text{Count}(\text{order\_id})$$[m
+[32m+[m
+[32m+[m[32mDownstream analytics users (such as BI Engineers and Product Managers) can evaluate these KPIs with near-zero query lag, eliminating the technical friction usually caused by parsing raw, un-indexed backend database records.[m
+[32m+[m
+[32m+[m[32m---[m
+[32m+[m
+[32m+[m[32m### 1.4 Expected Outcome & Target Stakeholders[m
+[32m+[m
+[32m+[m[32mThe end state of the automated pipeline is a structured, optimized physical data lake layout.[m
+[32m+[m
+[32m+[m[32m* **Data Storage Assets:** Raw ingestion batches are cleanly isolated by execution tokens, transformed into structurally verified historical tables, and stored as highly compressed, Hive-partitioned Parquet files organized physically by `order_date=YYYY-MM-DD`.[m
+[32m+[m[32m* **Target Audience:** The direct beneficiaries include **Data Analysts** requiring low-latency access to pre-aggregated datasets, **Data Engineers** seeking a modular blueprint for stateful change capture, and **Business Leaders** tracking daily revenue and velocity fluctuations.[m
+[32m+[m
+[32m+[m[32m---[m
+[32m+[m
+[32m+[m[32m### 1.5 Core System Scope[m
+[32m+[m
+[32m+[m[32mThe boundaries of the platform are explicitly defined to enforce architectural decoupling:[m
+[32m+[m
+[32m+[m[32m| Component | In-Scope Operational Boundary | Out-of-Scope System Boundary |[m
+[32m+[m[32m| --- | --- | --- |[m
+[32m+[m[32m| **Ingestion** | Micro-batch extraction from relational PostgreSQL OLTP engines using `updated_at` watermarks. | Real-time event streaming via tools like Apache Kafka or AWS Kinesis. |[m
+[32m+[m[32m| **Processing** | In-memory distributed data cleansing, schema validation, stateful deduplication, and aggregation via PySpark. | Complex, long-term machine learning model training or real-time predictive inferencing. |[m
+[32m+[m[32m| **Orchestration** | End-to-end task scheduling, pipeline run-id propagation, dependency enforcement, and failure retries through Airflow. | Advanced multi-tenant corporate security access routing or external identity management integration (OIDC/SAML). |[m
+[32m+[m[32m| **Serving Layer** | Local physical data lake files formatted with explicit partitioning structures ready for BI engine connectivity. | Direct generation, styling, or rendering of public-facing front-end data visualizations and reporting applications. |[m
+[32m+[m
+[32m+[m[32m---[m
+[32m+[m
+[32m+[m[32mGot it—let’s strip away the noise. In data engineering, portfolio projects are built to master and showcase best practices, but on a resume or documentation, it needs to be framed as solving one definitive architectural challenge.[m
+[32m+[m
+[32m+[m[32mHere is the rewritten, streamlined Problem Statement focusing on that single, core engineering challenge.[m
+[32m+[m
+[32m+[m[32m---[m
+[32m+[m
+[32m+[m[32m# 2. Problem Statement[m
+[32m+[m
+[32m+[m[32m### 2.1 The Core Challenge: Unscalable Data Ingestion and Analytical Processing[m
+[32m+[m
+[32m+[m[32mThe primary problem this project addresses is the operational and technical inefficiency of handling enterprise data updates using a legacy full-load ($O(N)$) batch paradigm. In a typical unoptimized e-commerce data flow, every pipeline run forces a complete extraction of raw transactional tables (`source_customers`, `source_products`, `source_orders`) from production systems, followed by full-table overwrites at the destination.[m
+[32m+[m
+[32m+[m[32mAs transaction volumes scale, this destructive and un-partitioned architecture causes four critical engineering failures:[m
+[32m+[m
+[32m+[m[32m* **Operational Risk:** Massive full-table queries strain the production transactional database (OLTP), consuming vital connection pools and risking application slowdowns or locking live customer checkout processes.[m
